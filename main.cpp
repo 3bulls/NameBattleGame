@@ -101,15 +101,15 @@ int my_getch(void);
 void clearScreen();
 
 
-void getWidthAndHeight(char *art[], int &width, int &height) {
-    width = 0;
-    height = 0;
+void getWidthAndHeight(char *art[], int *width, int *height) {
+    *width = 0;
+    *height = 0;
     for (int i = 0; art[i] != nullptr; i++) {
         int len = strlen(art[i]);
-        if (len > width) {
-            width = len;
+        if (len > *width) {
+            *width = len;
         }
-        height++;
+        (*height)++;
     }
 }
 
@@ -177,9 +177,38 @@ const char *creat_art[] = {
 };
 
 
+Character playerCharacter;
+Character enemyCharacter;
+
+void creatPlayerData(const char* name, JobType job) {
+    strncpy(playerCharacter.name, name, 12);
+    playerCharacter.name[12] = '\0'; 
+    playerCharacter.job = job;
+
+    // TODO: randomemize stats based on name and job
+    switch (job) {
+        case SOLDIER:
+            playerCharacter.hp = 150;
+            playerCharacter.mp = 30;
+            playerCharacter.attack = 20;
+            playerCharacter.magic = 5;
+            playerCharacter.physicDefense = 15;
+            playerCharacter.magicDefense = 5;
+            break;
+        case MAGE:
+            playerCharacter.hp = 100;
+            playerCharacter.mp = 100;
+            playerCharacter.attack = 5;
+            playerCharacter.magic = 25;
+            playerCharacter.physicDefense = 5;
+            playerCharacter.magicDefense = 15;
+            break;
+    }
+}
+
 void drawArtAtXY(int x, int y, const char* art[]) {
     int artWidth, artHeight;
-    getWidthAndHeight((char**)art, artWidth, artHeight);
+    getWidthAndHeight((char**)art, &artWidth, &artHeight);
 
     // Center the art if x or y is negative
     if (x < 0) {
@@ -194,7 +223,6 @@ void drawArtAtXY(int x, int y, const char* art[]) {
         gotoxy(x, y + i);
         std::cout << art[i];
     }
-    gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
 }
 
 void drawThePlatform() {
@@ -224,8 +252,10 @@ void drawStartScreen() {
     clearScreen();
     drawThePlatform();
     drawArtAtXY(-1, 3, banner);
-    drawArtAtXY(-1, 17, (const char*[]){"      Press Enter Key to Start      ", nullptr});
-    drawArtAtXY(-1, 19, (const char*[]){"    W/S to navigate, Enter to select    ", nullptr});
+    const char* pressEnterKey[] =  {"      Press Enter Key to Start      ", nullptr};
+    drawArtAtXY(-1, 17, pressEnterKey);
+    const char* instructions[] = {" Use W/S to navigate menus, Enter to select ", nullptr};
+    drawArtAtXY(-1, 19, instructions);
     gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
 }
 
@@ -240,11 +270,16 @@ void drawPlayerNameInputScreen() {
     clearScreen();
     drawThePlatform();
     drawArtAtXY(-1, 3, menu_art);
-    drawArtAtXY(25, 10, (const char*[]){"1. Create New Character", nullptr});
-    drawArtAtXY(25, 12, (const char*[]){"2. Load Character", nullptr});
-    drawArtAtXY(25, 14, (const char*[]){"3. Exit Game", nullptr});
-    drawArtAtXY(-1, 18, (const char*[]){"    W/S to navigate, Enter to select    ", nullptr});
-    drawArtAtXY(20, 10, (const char*[]){"->", nullptr});
+    const char* createNewChar[] = {"Create New Character", nullptr};
+    drawArtAtXY(25, 10, createNewChar);
+    const char* loadExistingChar[] = {"Load Existing Character", nullptr};
+    drawArtAtXY(25, 12, loadExistingChar);
+    const char* exitGame[] = {"Exit Game", nullptr};
+    drawArtAtXY(25, 14, exitGame);
+    const char* instructions[] = {"    W/S to navigate, Enter to select    ", nullptr};
+    drawArtAtXY(-1, 18, instructions);
+    const char* arrow[] = {"->", nullptr};
+    drawArtAtXY(20, 10, arrow);
     gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
 }
 
@@ -255,7 +290,8 @@ void clearArrowFromMenu(int selection) {
 }
 
 void drawArrowAtMenu(int selection) {
-    drawArtAtXY(20, 10 + selection * 2, (const char*[]){"->", nullptr});
+    const char* arrow[] = {"->", nullptr};
+    drawArtAtXY(20, 10 + selection * 2, arrow);
     gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
 }
 
@@ -263,6 +299,7 @@ void handlePlayerNameInput() {
     init_terminal();
     set_terminal_mode(false); 
     PlayerNameInputState inputState = INPUT_NEW_NAME;
+
     while (true) {
         if (kbhit()) {
             char ch = my_getch();
@@ -295,7 +332,8 @@ void drawCreateCharacterScreen(){
     clearScreen();
     drawThePlatform();
     drawArtAtXY(-1, 3, creat_art);
-    drawArtAtXY(25, 10, (const char*[]){"Enter your character name (max 12 chars): ", nullptr});
+    const char* prompt[] = {"Enter your character name (max 12 chars): ", nullptr};
+    drawArtAtXY(25, 10, prompt);
     gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
 }
 
@@ -304,7 +342,9 @@ void handleCreateCharacterInput(){
     int index = 0;
     init_terminal();
     set_terminal_mode(true);
+
     gotoxy(30, 12);
+    setcursortype(NORMALCURSOR);
     while (true) {
         char ch = my_getch();
         if (ch == '\r' || ch == '\n') {
@@ -313,27 +353,91 @@ void handleCreateCharacterInput(){
             if (index > 0) {
                 index--;
                 name[index] = '\0';
-                drawArtAtXY(30 + index, 12, (const char*[]){" ", nullptr});
+                const char* space[] = {" ", nullptr};
+                drawArtAtXY(30 + index, 12, space);
+                gotoxy(30 + index, 12);
             }
         } else if (index < 12 && isprint(ch)) {
             name[index++] = ch;
-            drawArtAtXY(30 + index - 1, 12, (const char*[]){&ch, nullptr});
+            char charStr[] = {ch, '\0'};
+            const char* charToDraw[] = {charStr, nullptr};
+            drawArtAtXY(30 + index - 1, 12, charToDraw);
+            gotoxy(30 + index, 12); 
         } else if (index == 12) {
-            drawArtAtXY(-1, 14, (const char*[]){"Name too long! Max 12 characters.", nullptr});
+            const char* nameTooLong[] = {"Name too long! Max 12 characters.", nullptr};
+            drawArtAtXY(-1, 14, nameTooLong);
+            gotoxy(30 + index, 12); 
         }
     }
     name[index] = '\0';
+
     clearScreen();
     drawThePlatform();
     drawArtAtXY(-1, 3, creat_art);
+    setcursortype(NOCURSOR);
     char nameDisplay[30];
     snprintf(nameDisplay, sizeof(nameDisplay), "Name: %s", name);
-    drawArtAtXY(-1, 6, (const char*[]){nameDisplay, nullptr});
-
+    const char* nameDisplayArt[] = {nameDisplay, nullptr};
+    drawArtAtXY(-1, 10, nameDisplayArt);
     
-    gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
-    my_getch();
+    const char* jobSelectionStrings[] = {
+        "Select Your Job:",
+        "1. Soldier",
+        "2. Mage",
+        nullptr
+    };
+    JobType selectedJob = SOLDIER;
+    drawArtAtXY(-1, 12, jobSelectionStrings);
+    int jobWidth, jobHeight;
+    getWidthAndHeight((char**)jobSelectionStrings, &jobWidth, &jobHeight);
+    const char* arrow[] = {"->", nullptr};
+    drawArtAtXY((SCREEN_WIDTH - jobWidth)/2 - 2, 13, arrow);
 
+    while (true) {
+        if (kbhit()) {
+            char ch = my_getch();
+            if (ch == 'w' || ch == 'W') {
+                selectedJob = static_cast<JobType>((selectedJob - 1 + 2) % 2);
+            } else if (ch == 's' || ch == 'S') {
+                selectedJob = static_cast<JobType>((selectedJob + 1) % 2);
+            } else if (ch == '\r' || ch == '\n') {
+                break;
+            }
+            for (int i = 0; i < 2; i++) {
+                gotoxy((SCREEN_WIDTH - jobWidth)/2 - 2, 13 + i);
+                if (i == selectedJob) {
+                    drawArtAtXY((SCREEN_WIDTH - jobWidth)/2 - 2, 13 + i, arrow);
+                } else {
+                    const char* space[] = {"  ", nullptr};
+                    drawArtAtXY((SCREEN_WIDTH - jobWidth)/2 - 2, 13 + i, space);
+                }
+            }
+        }
+    }
+
+    clearScreen();
+    drawThePlatform();
+    drawArtAtXY(-1, 3, creat_art);
+    const char* creationComplete[] = {"Character Creation Complete!", nullptr};
+    drawArtAtXY(-1, 10, creationComplete);
+    char finalNameDisplay[30];
+    snprintf(finalNameDisplay, sizeof(finalNameDisplay), "Name: %s", name);
+    const char* finalNameArt[] = {finalNameDisplay, nullptr};
+    drawArtAtXY(-1, 12, finalNameArt);
+    char finalJobDisplay[30];
+    snprintf(finalJobDisplay, sizeof(finalJobDisplay), "Job: %s", JobStrings[selectedJob]);
+    const char* finalJobArt[] = {finalJobDisplay, nullptr};
+    drawArtAtXY(-1, 14, finalJobArt);
+
+    creatPlayerData(name, selectedJob);
+    const char* storeOption[] = {"Do you want to save your character?", nullptr};
+    drawArtAtXY(-1, 16, storeOption);
+    const char* yesOption[] = {"1. Yes", nullptr};
+    drawArtAtXY(-1, 18, yesOption);
+    const char* noOption[] = {"2. No", nullptr};
+    drawArtAtXY(-1, 19, noOption);
+
+    my_getch();
     restore_terminal();
     GlobalgameState = STATE_TITLE;
 }
@@ -341,6 +445,8 @@ void handleCreateCharacterInput(){
 int main() {
 
     GlobalgameState = STATE_TITLE;
+    setcursortype(NOCURSOR);
+
     while(true) {
         switch (GlobalgameState)
         {

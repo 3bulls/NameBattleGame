@@ -1,15 +1,3 @@
-/**
- * @file    conioex.h (macOS Port)
- * @brief   macOS/Linux Terminal I/O 拡張ヘッダ (Compatible with HAL Win32 version)
- *
- * @author  Ported for macOS/Linux
- * @date    2025/03/13
- * @version 1.03 (Mac Port)
- * * 制限事項:
- * 1. ジョイスティック入力はサポートしていません (常に0を返します)。
- * 2. ターミナル仕様のため、キーの「離した瞬間」の検出は不正確な場合があります。
- * 3. MIDI再生はサポートしていません (WAV/MP3のみ afplay で再生)。
- */
 #ifndef __CONIOEX_H
 #define __CONIOEX_H
 

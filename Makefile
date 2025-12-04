@@ -1,41 +1,41 @@
-# ---------------------------------------------------------
-# macOS / Linux C++ Makefile
-# 适用于包含本地头文件 (conioex.h) 的简单项目
-# ---------------------------------------------------------
-
-# 1. 编译器设置 (Mac 上 g++ 通常是指向 clang++ 的)
+# 定义编译器和通用选项
 CXX = g++
-
-# 2. 编译选项
-# -Wall: 显示所有警告 (非常有帮助)
-# -std=c++17: 使用 C++17 标准 (建议使用现代标准)
-# -g: 生成调试信息 (如果你需要用 lldb 调试)
 CXXFLAGS = -Wall -std=c++17 -g
+SRC = main.cpp
 
-# 3. 目标文件名称 (编译出来的可执行文件名)
-TARGET = main
+# --- 自动识别操作系统 ---
 
-# 4. 源文件列表
-SRCS = main.cpp
+# 1. 检测 Windows (Windows_NT 是 Windows 的环境变量)
+ifeq ($(OS),Windows_NT)
+    # Windows 下的配置
+    TARGET = main.exe
+    # Windows 需要链接 winmm 库
+    LDFLAGS = -lwinmm
+    RM = del /Q
+else
+    # 2. 检测非 Windows (Mac 或 Linux)
+    UNAME_S := $(shell uname -s)
+    
+    ifeq ($(UNAME_S),Darwin)
+        # macOS 下的配置
+        TARGET = main
+        # Mac 不需要 winmm，如果有其他库写在这里
+        LDFLAGS = 
+        RM = rm -f
+    else
+        # Linux 下的配置 (预留)
+        TARGET = main
+        LDFLAGS = 
+        RM = rm -f
+    endif
+endif
 
-# 5. 头文件依赖 (这样修改头文件后，make 会知道重新编译)
-HEADERS = conioex.h
+# --- 编译规则 ---
 
-# ---------------------------------------------------------
-# 编译规则
-# ---------------------------------------------------------
-
-# 默认目标 (只输入 make 时执行这个)
 all: $(TARGET)
 
-# 链接规则: 告诉编译器如何生成可执行文件
-# $@ 代表目标名 (main)
-# $^ 代表所有依赖文件 (main.cpp conioex.h)
-$(TARGET): $(SRCS) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET)
+$(TARGET): $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)
 
-# 清理规则
-# 输入 make clean 时执行，删除生成的可执行文件
 clean:
-	rm -f $(TARGET)
-	rm -f *.o
+	$(RM) $(TARGET)
