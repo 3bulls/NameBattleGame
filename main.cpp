@@ -223,6 +223,7 @@ void drawArtAtXY(int x, int y, const char* art[]) {
         gotoxy(x, y + i);
         std::cout << art[i];
     }
+    std::cout.flush();
 }
 
 void drawThePlatform() {
@@ -392,6 +393,7 @@ void handleCreateCharacterInput(){
     getWidthAndHeight((char**)jobSelectionStrings, &jobWidth, &jobHeight);
     const char* arrow[] = {"->", nullptr};
     drawArtAtXY((SCREEN_WIDTH - jobWidth)/2 - 2, 13, arrow);
+
     init_terminal();
     set_terminal_mode(false); 
     while (true) {
@@ -415,6 +417,7 @@ void handleCreateCharacterInput(){
             }
         }
     }
+    restore_terminal();
 
     clearScreen();
     drawThePlatform();
