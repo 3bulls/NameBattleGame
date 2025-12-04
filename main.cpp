@@ -392,7 +392,8 @@ void handleCreateCharacterInput(){
     getWidthAndHeight((char**)jobSelectionStrings, &jobWidth, &jobHeight);
     const char* arrow[] = {"->", nullptr};
     drawArtAtXY((SCREEN_WIDTH - jobWidth)/2 - 2, 13, arrow);
-
+    init_terminal();
+    set_terminal_mode(false); 
     while (true) {
         if (kbhit()) {
             char ch = my_getch();
