@@ -85,12 +85,14 @@ enum GameState {
     STATE_PLAYER_NAME_INPUT,
     STATE_PLAYER_CREATION,
     STATE_PLAYER_LOAD,
+    STATE_ENEMY_CREATION,
     STATE_BATTLE,
     STATE_EXIT,
 };
 
 GameState GlobalgameState;
 
+struct Character;
 
 // my input setting for compatibility
 void init_terminal();
@@ -99,6 +101,8 @@ void set_terminal_mode(bool blocking);
 int kbhit(void);
 int my_getch(void);
 void clearScreen();
+void savePlayerToFile(Character* player);
+bool loadPlayerFromFile(Character* player);
 
 
 void getWidthAndHeight(char *art[], int *width, int *height) {
@@ -169,7 +173,7 @@ const char *menu_art[] = {
     "| |\\/| | / _ \\| '_ \\ | | | |",
     "| |  | ||  __/| | | || |_| |",
     "|_|  |_| \\___||_| |_| \\__,_",
-    NULL 
+    nullptr 
 };
 
 const char *creat_art[] = {
@@ -178,7 +182,26 @@ const char *creat_art[] = {
     "| |    | '__|/ _ \\ / _` || __|",
     "| |___ | |  |  __/| (_| || |_ ",
     " \\____||_|   \\___| \\__,_| \\__|",
-    NULL 
+    nullptr 
+};
+
+const char *enemy_art[] = {
+    " _____                                   ",
+    "| ____| _ __    ___  _ __ ___   _   _  ",
+    "|  _|  | '_ \\  / _ \\| '_ ` _ \\ | | | | ",
+    "| |___ | | | ||  __/| | | | | || |_| | ",
+    "|_____||_| |_| \\___||_| |_| |_| \\__, | ",
+    "                                |___/  ",
+    nullptr
+};
+
+const char *load_art[] = {
+    " _                       _ ",
+    "| |     ___    __ _   __| |",
+    "| |    / _ \\  / _` | / _` |",
+    "| |___| (_) || (_| || (_| |",
+    "|_____|\\___/  \\__,_| \\__,_|",
+    nullptr
 };
 
 
@@ -209,6 +232,12 @@ void creatPlayerData(const char* name, JobType job) {
             playerCharacter.magicDefense = 15;
             break;
     }
+}
+
+void createEnemyData(const char* name) {
+    strncpy(enemyCharacter.name, name, 12);
+    enemyCharacter.name[12] = '\0'; 
+
 }
 
 void drawArtAtXY(int x, int y, const char* art[]) {
@@ -270,6 +299,7 @@ void drawStartScreen() {
     while (ch != '\r' && ch != '\n') {
         ch = my_getch();
     }
+    GlobalgameState = STATE_PLAYER_NAME_INPUT;
 }
 
 void drawPlayerNameInputScreen() {
@@ -474,9 +504,96 @@ void handleCreateCharacterInput(){
         }
     }
 
+    if (storeSelection == YES) {
+        savePlayerToFile(&playerCharacter);
+    }
+
     my_getch();
     restore_terminal();
-    GlobalgameState = STATE_TITLE;
+    GlobalgameState = STATE_ENEMY_CREATION;
+}
+
+void drawEnemyCreationScreen()
+{
+    clearScreen();
+    drawThePlatform();
+    drawArtAtXY(-1, 3, enemy_art);
+    const char* prompt[] = {"Enter Enemy character name (max 12 chars): ", nullptr};
+    drawArtAtXY(-1, 10, prompt);
+    gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
+}
+
+void handleEnemyCreationInput()
+{
+    char name[13] = {0};
+    int index = 0;
+    init_terminal();
+    set_terminal_mode(true);
+
+    gotoxy(30, 12);
+    setcursortype(NORMALCURSOR);
+    while (true) {
+        char ch = my_getch();
+        if (ch == '\r' || ch == '\n') {
+            break;
+        } else if (ch == '\b' || ch == 127) { 
+            if (index > 0) {
+                index--;
+                name[index] = '\0';
+                const char* space[] = {" ", nullptr};
+                drawArtAtXY(30 + index, 12, space);
+                gotoxy(30 + index, 12);
+            }
+        } else if (index < 12 && isprint(ch)) {
+            name[index++] = ch;
+            char charStr[] = {ch, '\0'};
+            const char* charToDraw[] = {charStr, nullptr};
+            drawArtAtXY(30 + index - 1, 12, charToDraw);
+            gotoxy(30 + index, 12); 
+        } else if (index == 12) {
+            const char* nameTooLong[] = {"Name too long! Max 12 characters.", nullptr};
+            drawArtAtXY(-1, 14, nameTooLong);
+            gotoxy(30 + index, 12); 
+        }
+    }
+    name[index] = '\0';
+    restore_terminal();
+
+    createEnemyData(name);
+    const char* creationComplete[] = {"Enemy Creation Complete!", nullptr};
+    drawArtAtXY(-1, 16, creationComplete);
+
+    const char* pressKey[] = {"Press any key to continue...", nullptr};
+    drawArtAtXY(-1, 18, pressKey);
+    my_getch();
+    GlobalgameState = STATE_BATTLE;
+}
+
+void drawPlayerLoadScreen(){
+    clearScreen();
+    drawThePlatform();
+    drawArtAtXY(-1, 3, load_art);
+    const char* loading[] = {"Loading Player Data...", nullptr};
+    drawArtAtXY(-1, 10, loading);
+    gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
+}
+
+void handlePlayerLoadInput(){
+    init_terminal();
+    set_terminal_mode(true);
+    if (loadPlayerFromFile(&playerCharacter)) {
+        const char* loadSuccess[] = {"Player Data Loaded Successfully!", nullptr};
+        drawArtAtXY(-1, 12, loadSuccess);
+        GlobalgameState = STATE_ENEMY_CREATION;
+    } else {
+        const char* loadFail[] = {"Failed to Load Player Data!", nullptr};
+        drawArtAtXY(-1, 12, loadFail);
+        GlobalgameState = STATE_PLAYER_NAME_INPUT;
+    }
+    const char* pressKey[] = {"Press any key to continue...", nullptr};
+    drawArtAtXY(-1, 14, pressKey);
+    my_getch();
+    restore_terminal();
 }
 
 int main() {
@@ -490,18 +607,26 @@ int main() {
         case STATE_TITLE:
             drawStartScreen();
             handleStartScreenInput();
-            GlobalgameState = STATE_PLAYER_NAME_INPUT;
             break;
         case STATE_PLAYER_NAME_INPUT:
             drawPlayerNameInputScreen();
             handlePlayerNameInput();
             break;
+        case STATE_PLAYER_LOAD:
+            drawPlayerLoadScreen();
+            handlePlayerLoadInput();
+            break;
         case STATE_PLAYER_CREATION:
             drawCreateCharacterScreen();
             handleCreateCharacterInput();
             break;
-        case STATE_PLAYER_LOAD:
+        case STATE_ENEMY_CREATION:
+            drawEnemyCreationScreen();
+            handleEnemyCreationInput();
+            break;
         case STATE_BATTLE:
+            GlobalgameState = STATE_TITLE;
+            break;
         case STATE_EXIT:
         default:
             return 0;
@@ -570,7 +695,6 @@ int kbhit(void) {
 #endif
 }
 
-
 int my_getch(void) {
 #if defined(__linux__) || defined(__APPLE__)
     char ch;
@@ -596,4 +720,22 @@ void clearScreen()
 #endif
 }
 
+void savePlayerToFile(Character* player)
+{
+    std::ofstream outFile("player_data.bin", std::ios::binary);
+    if (outFile.is_open()) {
+        outFile.write(reinterpret_cast<const char*>(player), sizeof(Character));
+        outFile.close();
+    }
+}
 
+bool loadPlayerFromFile(Character* player)
+{
+    std::ifstream inFile("player_data.bin", std::ios::binary);
+    if (inFile.is_open()) {
+        inFile.read(reinterpret_cast<char*>(player), sizeof(Character));
+        inFile.close();
+        return true;
+    }
+    return false;
+}
