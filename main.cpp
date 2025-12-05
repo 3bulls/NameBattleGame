@@ -104,7 +104,6 @@ void clearScreen();
 void savePlayerToFile(Character* player);
 bool loadPlayerFromFile(Character* player);
 
-
 void getWidthAndHeight(char *art[], int *width, int *height) {
     *width = 0;
     *height = 0;
@@ -118,7 +117,7 @@ void getWidthAndHeight(char *art[], int *width, int *height) {
 }
 
 enum JobType {
-    SOLDIER,
+    WARRIOR,
     MAGE,
 };
 
@@ -128,7 +127,7 @@ enum OptionType {
 };
 
 char JobStrings[][10] = {
-    "Soldier",
+    "Warrior",
     "Mage",
 };
 
@@ -204,6 +203,83 @@ const char *load_art[] = {
     nullptr
 };
 
+const char *warrior_art[] = {
+    "         \\\\             /|",
+    "         _!_           //",
+    "        /___\\         //",
+    "        [+++]        //",
+    "     _ _\\^^^/_ _    //",
+    "    ( )  '-'    ) \\//",
+    "   / /\\   {&} | \\/ )\\",
+    "  ( <_ \\     / \\  /",
+    "   .-'\"\"`'-;:::<`\"",
+    "  /         \\:::\\",
+    "  |   {&}   ||\\  \\",
+    "  \\         /) \\  )",
+    "   '-.___.-'/   \\ \\",
+    "      / /        \\ \\_",
+    "    .|___\\       |___\\",
+    NULL
+};
+
+const char *enemy_warrior_art[] = {
+    "|\\             //",
+    " \\\\           _!_",
+    "  \\\\         /___\\",
+    "   \\\\        [+++]",
+    "    \\\\    _ _\\^^^/_ _",
+    "     \\\\/ (    '-'  ( )",
+    "     /( \\/ | {&}   /\\ \\",
+    "       \\  / \\     / _> )",
+    "        \"`   >:::;-'`\"\"'-.",
+    "            /:::/         \\",
+    "           /  /||   {&}   |",
+    "          (  / (\\         /",
+    "          / /   \\'-.___.-'",
+    "        _/ /     \\ \\",
+    "       /___|    /___|",
+    NULL
+};
+
+const char *mage_art[] = {
+    "                   .",
+    "         /^\\     .",
+    "    /\\   \"V\"",
+    "   /__\\   I      O  o",
+    "  //..\\\\  I     .",
+    "  \\].`[/  I",
+    "  /l\\/j\\  (]    .  O",
+    " /. ~~ ,\\/I          .",
+    " \\\\L__j^\\/I       o",
+    "  \\/--v}  I     o   .",
+    "  |    |  I   _________",
+    "  |    |  I c(`       ')o",
+    "  |    l  I   \\.     ,/",
+    "_/j  L l\\_!  _//^---^\\\\_  c",
+    NULL
+};
+
+const char *enemy_mage_art[] = {
+    "                  /\\",
+    "                 /  \\",
+    "                |    |",
+    "              --:'''':--",
+    "                :'_' :",
+    "                _:\"\":\\___",
+    " ' '      ____.' :::     '._",
+    ". *=====<<=)           \\    :",
+    " .  '      '-'-'\\_      /'._.'",
+    "                  \\====:_ \"\"",
+    "                 .'     \\\\",
+    "                :       :",
+    "               /   :    \\",
+    "              :   .      '.",
+    "          snd :  : :      :",
+    "              :__:-:__.;--'",
+    "              '-'   '-'",
+    NULL
+};
+
 
 Character playerCharacter;
 Character enemyCharacter;
@@ -215,7 +291,7 @@ void creatPlayerData(const char* name, JobType job) {
 
     // TODO: randomemize stats based on name and job
     switch (job) {
-        case SOLDIER:
+        case WARRIOR:
             playerCharacter.hp = 150;
             playerCharacter.mp = 30;
             playerCharacter.attack = 20;
@@ -418,11 +494,11 @@ void handleCreateCharacterInput(){
     
     const char* jobSelectionStrings[] = {
         "Select Your Job:",
-        "1. Soldier",
+        "1. Warrior",
         "2. Mage",
         nullptr
     };
-    JobType selectedJob = SOLDIER;
+    JobType selectedJob = WARRIOR;
     drawArtAtXY(-1, 12, jobSelectionStrings);
     int jobWidth, jobHeight;
     getWidthAndHeight((char**)jobSelectionStrings, &jobWidth, &jobHeight);
@@ -596,6 +672,20 @@ void handlePlayerLoadInput(){
     restore_terminal();
 }
 
+void drawBattleScreen(){
+    clearScreen();
+    drawThePlatform();
+    drawArtAtXY(3, 3, mage_art);
+    gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
+}
+
+void handleBattleInput(){
+    init_terminal();
+    set_terminal_mode(false);
+
+    char ch = my_getch();
+}
+
 int main() {
 
     GlobalgameState = STATE_TITLE;
@@ -625,7 +715,8 @@ int main() {
             handleEnemyCreationInput();
             break;
         case STATE_BATTLE:
-            GlobalgameState = STATE_TITLE;
+            drawBattleScreen();
+            handleBattleInput();
             break;
         case STATE_EXIT:
         default:
