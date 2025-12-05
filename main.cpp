@@ -118,6 +118,11 @@ enum JobType {
     MAGE,
 };
 
+enum OptionType {
+    YES,
+    NO
+};
+
 char JobStrings[][10] = {
     "Soldier",
     "Mage",
@@ -434,12 +439,40 @@ void handleCreateCharacterInput(){
     drawArtAtXY(-1, 14, finalJobArt);
 
     creatPlayerData(name, selectedJob);
-    const char* storeOption[] = {"Do you want to save your character?", nullptr};
+    const char* storeOption[] = {
+        "Do you want to save your character?", 
+        "1. Yes",
+        "2. No",
+        nullptr};
     drawArtAtXY(-1, 16, storeOption);
-    const char* yesOption[] = {"1. Yes", nullptr};
-    drawArtAtXY(-1, 18, yesOption);
-    const char* noOption[] = {"2. No", nullptr};
-    drawArtAtXY(-1, 19, noOption);
+    int storeWidth, storeHeight;
+    getWidthAndHeight((char**)storeOption, &storeWidth, &storeHeight);
+    drawArtAtXY((SCREEN_WIDTH - storeWidth)/2 - 2, 17, arrow);
+    OptionType storeSelection = YES;
+
+    init_terminal();
+    set_terminal_mode(false); 
+        while (true) {
+        if (kbhit()) {
+            char ch = my_getch();
+            if (ch == 'w' || ch == 'W') {
+                storeSelection = static_cast<OptionType>((storeSelection - 1 + 2) % 2);
+            } else if (ch == 's' || ch == 'S') {
+                storeSelection = static_cast<OptionType>((storeSelection + 1) % 2);
+            } else if (ch == '\r' || ch == '\n') {
+                break;
+            }
+            for (int i = 0; i < 2; i++) {
+                gotoxy((SCREEN_WIDTH - storeWidth)/2 - 2, 17 + i);
+                if (i == storeSelection) {
+                    drawArtAtXY((SCREEN_WIDTH - storeWidth)/2 - 2, 17 + i, arrow);
+                } else {
+                    const char* space[] = {"  ", nullptr};
+                    drawArtAtXY((SCREEN_WIDTH - storeWidth)/2 - 2, 17 + i, space);
+                }
+            }
+        }
+    }
 
     my_getch();
     restore_terminal();
