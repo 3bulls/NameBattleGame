@@ -966,6 +966,8 @@ int main() {
             handleGameOverInput();
             break;
         case STATE_EXIT:
+            setcursortype(NORMALCURSOR);
+            clearScreen();
         default:
             return 0;
         }
