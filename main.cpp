@@ -87,7 +87,13 @@ enum GameState {
     STATE_PLAYER_LOAD,
     STATE_ENEMY_CREATION,
     STATE_BATTLE,
+    STATE_GAME_OVER,
     STATE_EXIT,
+};
+
+enum BattleTurn {
+    PLAYER_TURN,
+    ENEMY_TURN,
 };
 
 GameState GlobalgameState;
@@ -143,6 +149,7 @@ struct Character {
     char name[13]; // 名前 (最大12文字 + 終端文字)
     JobType job;   // 職業
     int hp;        // ヒットポイント
+    int maxHp;     // 最大ヒットポイント
     int mp;        // マジックポイント
     int attack;    // 攻撃力
     int magic;     // 魔力
@@ -164,6 +171,15 @@ const char *banner[] = {
         "| |_) |/ ___ \\ | |    | |  | |___ | |___ ",
         "|____//_/   \\_\\|_|    |_|  |_____||_____|",
         nullptr
+};
+
+const char *battle_text[] = {
+    " ____    _  _____ _____ _     _____   _   _   _ ",
+    "| __ )  / \\|_   _|_   _| |   | ____| | | | | | |",
+    "|  _ \\ / _ \\ | |   | | | |   |  _|   | | | | | |",
+    "| |_) / ___ \\| |   | | | |___| |___  |_| |_| |_|",
+    "|____/_/   \\_\\_|   |_| |_____|_____| (_) (_) (_)",
+    nullptr
 };
 
 const char *menu_art[] = {
@@ -261,7 +277,6 @@ const char *mage_art[] = {
 
 const char *enemy_mage_art[] = {
     "                  /\\",
-    "                 /  \\",
     "                |    |",
     "              --:'''':--",
     "                :'_' :",
@@ -274,10 +289,9 @@ const char *enemy_mage_art[] = {
     "                :       :",
     "               /   :    \\",
     "              :   .      '.",
-    "          snd :  : :      :",
     "              :__:-:__.;--'",
     "              '-'   '-'",
-    NULL
+    nullptr
 };
 
 
@@ -289,23 +303,29 @@ void creatPlayerData(const char* name, JobType job) {
     playerCharacter.name[12] = '\0'; 
     playerCharacter.job = job;
 
-    // TODO: randomemize stats based on name and job
+    int nameNum = 0;
+    for (int i = 0; name[i] != '\0'; i++) {
+        nameNum += (int)name[i];
+    }
+
     switch (job) {
         case WARRIOR:
-            playerCharacter.hp = 150;
+            playerCharacter.hp = 200;
+            playerCharacter.maxHp = 200;
             playerCharacter.mp = 30;
-            playerCharacter.attack = 20;
-            playerCharacter.magic = 5;
-            playerCharacter.physicDefense = 15;
-            playerCharacter.magicDefense = 5;
+            playerCharacter.attack = nameNum % 20 + 10;
+            playerCharacter.magic = nameNum % 10 + 5;
+            playerCharacter.physicDefense = nameNum % 5 + 10;
+            playerCharacter.magicDefense = nameNum % 5 + 5;
             break;
         case MAGE:
             playerCharacter.hp = 100;
+            playerCharacter.maxHp = 100;
             playerCharacter.mp = 100;
-            playerCharacter.attack = 5;
-            playerCharacter.magic = 25;
-            playerCharacter.physicDefense = 5;
-            playerCharacter.magicDefense = 15;
+            playerCharacter.attack = nameNum % 10 + 5;
+            playerCharacter.magic = nameNum % 20 + 15;
+            playerCharacter.physicDefense = nameNum % 5 + 5;
+            playerCharacter.magicDefense = nameNum % 5 + 10;
             break;
     }
 }
@@ -313,7 +333,33 @@ void creatPlayerData(const char* name, JobType job) {
 void createEnemyData(const char* name) {
     strncpy(enemyCharacter.name, name, 12);
     enemyCharacter.name[12] = '\0'; 
+    enemyCharacter.job = (strlen(name) % 2 == 0) ? WARRIOR : MAGE;
 
+    int nameNum = 0;
+    for (int i = 0; name[i] != '\0'; i++) {
+        nameNum += (int)name[i];
+    }
+
+    switch (enemyCharacter.job) {
+        case WARRIOR:
+            enemyCharacter.hp = 200;
+            enemyCharacter.maxHp = 200;
+            enemyCharacter.mp = 30;
+            enemyCharacter.attack = nameNum % 20 + 10;
+            enemyCharacter.magic = nameNum % 10 + 5;
+            enemyCharacter.physicDefense = nameNum % 5 + 10;
+            enemyCharacter.magicDefense = nameNum % 5 + 5;
+            break;
+        case MAGE:
+            enemyCharacter.hp = 100;
+            enemyCharacter.maxHp = 100;
+            enemyCharacter.mp = 100;
+            enemyCharacter.attack = nameNum % 10 + 5;
+            enemyCharacter.magic = nameNum % 20 + 15;
+            enemyCharacter.physicDefense = nameNum % 5 + 5;
+            enemyCharacter.magicDefense = nameNum % 5 + 10;
+            break;
+    }
 }
 
 void drawArtAtXY(int x, int y, const char* art[]) {
@@ -672,18 +718,181 @@ void handlePlayerLoadInput(){
     restore_terminal();
 }
 
+void drawCharacterInfoAtXY(int x, int y, Character* character)
+{
+    char infoLines[6][40];
+    snprintf(infoLines[0], sizeof(infoLines[0]), "Name: %s", character->name);
+    snprintf(infoLines[1], sizeof(infoLines[1]), "Job: %s", JobStrings[character->job]);
+    snprintf(infoLines[2], sizeof(infoLines[2]), "HP: %d/%d", character->hp, character->maxHp);
+    snprintf(infoLines[3], sizeof(infoLines[3]), "MP: %d", character->mp);
+    snprintf(infoLines[4], sizeof(infoLines[4]), "ATK: %d  MAG: %d", character->attack, character->magic);
+    snprintf(infoLines[5], sizeof(infoLines[5]), "P.DEF: %d  M.DEF: %d", character->physicDefense, character->magicDefense);
+
+    for (int i = 0; i < 6; i++) {
+        gotoxy(x, y + i);
+        std::cout << infoLines[i];
+    }
+    std::cout.flush();
+}
+
+void drawBattleProcess(BattleTurn turn)
+{
+    while (playerCharacter.hp > 0 && enemyCharacter.hp > 0) {
+        clearScreen();
+        drawThePlatform();
+        // Draw Player
+        drawArtAtXY(3, 3, playerCharacter.job == WARRIOR ? warrior_art : mage_art);
+        // Draw Enemy
+        drawArtAtXY(50, 3, enemyCharacter.job == WARRIOR ? enemy_warrior_art : enemy_mage_art);   
+
+        int playerDamage = playerCharacter.attack - enemyCharacter.physicDefense;
+        int enemyDamage = enemyCharacter.attack - playerCharacter.physicDefense;
+        int playerMagicDamage = playerCharacter.magic - enemyCharacter.magicDefense;
+        int enemyMagicDamage = enemyCharacter.magic - playerCharacter.magicDefense;
+
+        playerDamage *= (rand() % 51 + 90) / 100.0;
+        enemyDamage *= (rand() % 51 + 90) / 100.0;
+        playerMagicDamage *= (rand() % 51 + 90) / 100.0;
+        enemyMagicDamage *= (rand() % 51 + 90) / 100.0;
+
+        if (turn == PLAYER_TURN) {
+            int trueDamage;
+            if (playerCharacter.job == WARRIOR) {
+                trueDamage = (playerDamage > 0) ? playerDamage : 1;
+                enemyCharacter.hp -= trueDamage;
+            } else {
+                trueDamage = (playerMagicDamage > 0) ? playerMagicDamage : 1;
+                enemyCharacter.hp -= trueDamage;
+            }
+            const char* attackType = (playerCharacter.job == WARRIOR) ? "Physical Damage!!!" : "Magic Damage!!!";
+            char damageStr[30];
+            snprintf(damageStr, sizeof(damageStr), "Causing %d damage", trueDamage);
+            const char* playerAttackText[] = {
+                "Your Turn!", 
+                "You attack enemy by ",
+                attackType,
+                damageStr,
+                nullptr};
+
+            drawArtAtXY(-1, SCREEN_HEIGHT - 5, playerAttackText);
+            turn = ENEMY_TURN;
+        } else {
+            if (enemyCharacter.job == WARRIOR) {
+                playerCharacter.hp -= (enemyDamage > 0) ? enemyDamage : 1;
+            } else {
+                playerCharacter.hp -= (enemyMagicDamage > 0) ? enemyMagicDamage : 1;
+            }
+            const char* attackType = (enemyCharacter.job == WARRIOR) ? "Physical Damage!!!" : "Magic Damage!!!";
+            
+            char damageStr[30];
+            snprintf(damageStr, sizeof(damageStr), "Causing %d damage", (enemyCharacter.job == WARRIOR) ? ((enemyDamage > 0) ? enemyDamage : 1) : ((enemyMagicDamage > 0) ? enemyMagicDamage : 1));
+            const char* enemyAttackText[] = {
+                "Enemy's Turn!", 
+                "Enemy attacks you by ",
+                attackType,
+                damageStr,
+                nullptr};
+            drawArtAtXY(-1, SCREEN_HEIGHT - 5, enemyAttackText);
+            turn = PLAYER_TURN;
+        }
+
+        // Draw HP
+        int nOfPlayer = playerCharacter.hp * 20 / playerCharacter.maxHp;
+        int nOfEnemy = enemyCharacter.hp * 20 / enemyCharacter.maxHp;
+        char playerHpBar[25] = "HP: [";
+        for (int i = 0; i < 20; i++) {
+            if (i < nOfPlayer) {
+                strcat(playerHpBar, "=");
+            } else {
+                strcat(playerHpBar, " ");
+            }
+        }
+        strcat(playerHpBar, "]");
+        char enemyHpBar[25] = "HP: [";
+        for (int i = 0; i < 20; i++) {
+            if (i < nOfEnemy) {
+                strcat(enemyHpBar, "=");
+            } else {
+                strcat(enemyHpBar, " ");
+            }
+        }
+        strcat(enemyHpBar, "]");
+        const char* playerHpArt[] = {playerHpBar, nullptr};
+        const char* enemyHpArt[] = {enemyHpBar, nullptr};
+        drawArtAtXY(3, 2, playerHpArt);
+        drawArtAtXY(50, 2, enemyHpArt);
+
+        drawCharacterInfoAtXY(3, SCREEN_HEIGHT - 6, &playerCharacter);
+        drawCharacterInfoAtXY(60, SCREEN_HEIGHT - 6, &enemyCharacter);
+        while (char ch = my_getch()) {
+            if (ch == '\r' || ch == '\n') {
+                break;
+            }
+        }
+    }
+    GlobalgameState = STATE_GAME_OVER;
+}
+
 void drawBattleScreen(){
     clearScreen();
     drawThePlatform();
-    drawArtAtXY(3, 3, mage_art);
+    drawArtAtXY(-1, 8, battle_text);
+    const char* battleRule[] = {"Press enter key to proceed each turn.", nullptr};
+    drawArtAtXY(-1, 16, battleRule);
+    while (char ch = my_getch())
+    {
+        if (ch == '\r' || ch == '\n') {
+            break;
+        }
+    }
+
     gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
 }
 
 void handleBattleInput(){
+    setcursortype(NOCURSOR);
     init_terminal();
     set_terminal_mode(false);
-
+    BattleTurn turn = PLAYER_TURN;
+    drawBattleProcess(turn);
     char ch = my_getch();
+}
+
+void drawGameOverScreen()
+{
+    clearScreen();
+    drawThePlatform();
+    const char* gameOverText[] = {
+        "  ____                         ___                 ",
+        " / ___| __ _ _ __ ___   ___   / _ \\__   _____ _ __ ",
+        "| |  _ / _` | '_ ` _ \\ / _ \\ | | | \\ \\ / / _ \\ '__|",
+        "| |_| | (_| | | | | | |  __/ | |_| |\\ V /  __/ |   ",
+        " \\____|\\__,_|_| |_| |_|\\___|  \\___/  \\_/ \\___|_|   ",
+        nullptr
+    };
+    drawArtAtXY(-1, 5, gameOverText);
+
+    const char* resultText;
+    if (playerCharacter.hp > 0) {
+        resultText = "You Win!";
+    } else {
+        resultText = "You Lose!";
+    }
+    const char* resultArt[] = {resultText, nullptr};
+    drawArtAtXY(-1, 15, resultArt);
+
+    const char* pressKey[] = {"Press any key to exit...", nullptr};
+    drawArtAtXY(-1, 18, pressKey);
+    gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
+}
+
+void handleGameOverInput()
+{
+    init_terminal();
+    set_terminal_mode(true);
+    my_getch();
+    restore_terminal();
+    GlobalgameState = STATE_EXIT;
 }
 
 int main() {
@@ -717,6 +926,10 @@ int main() {
         case STATE_BATTLE:
             drawBattleScreen();
             handleBattleInput();
+            break;
+        case STATE_GAME_OVER:
+            drawGameOverScreen();
+            handleGameOverInput();
             break;
         case STATE_EXIT:
         default:
