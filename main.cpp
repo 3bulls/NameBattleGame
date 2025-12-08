@@ -1,78 +1,3 @@
-// 【★★評価課題★★】 ネームバトラー(名前で戦闘プログラム)【★★評価課題★★】 
-
-// 提出物：main.cpp  ★★ main.cpp を圧縮してはダメ ★★
-//         暗号化.txt【コードをどのように数値化したのか指し示すコード表の資料、エクセルかパワポも可】
-//         exeファイル        (2種類をまとめて圧縮すること)
-//           セーブデータ.bin (2種類をまとめて圧縮すること)（■任意）
-//           フローチャート（■任意）
-//           画面遷移図（■任意）
-// 課題目的：★★  独自ある面白いゲームであること  ★★
-//           これまでの授業内容を理解していること
-//           関数を使用していること
-//           プロトタイプ宣言を使用していること
-//           配列を使用していること
-//           構造体を使用していること
-//           ポインタを使用していること
-//           ファイルの読み書きができること
-//           効果的に画面描画できること
-//           画面遷移の区切りが意識的についていること
-
-// 【仕様】
-// ・名前のASCII文字コードを利用してキャラクターを自動作成すること
-//   (入力時に文字数の指定はしてよい。例.４～１２文字)
-//   (文字サイズ数や、文字の組み合わせで上手く暗号化すること)
-//   (ビット演算とか利用すると、少ない文字数からでも引き出しの量は増えるはず)
-// ・登録しているキャラクターのデータを保存すること
-// ・保存したキャラクターのデータを読み込み出来ること
-// ・登録されているキャラクターデータを使用して、任意のキャラクター同士を選択して戦闘させること
-// ・各画面遷移ごとにそれぞれ関数化していること
-// ・戦闘処理のダメージ計算する処理を関数化させること
-// ・ゲームループを使用してゲームが終了しないこと
-// ・キャラクターの情報を構造体で管理していること
-// ・キャラクターの情報をポインタで関数に受け渡ししていること
-// ・タイトル画面から各画面へ遷移すること
-// ・80ｘ25のサイズをフル活用すること
-// ・使用できるインクルードファイルは以下のもの限定で作成する
-// 	#include <iostream>	// 標準入出力(C++)
-// 	#include <conio.h>	// コンソール入出力 「#include "conioex.h"」に置き換えてもよい
-// 	#include <fstream>	// ファイル入出力(C++)
-
-
-// 【要求】
-// ・操作するインターフェース(UI)がわかりやすいようにする
-//    (わかりにくいところは操作説明も画面に見えるようにする)
-// ・プログラムの画面レイアウトの内容を凝った表示にする。
-//   （画面全体を使って演出表現できている方が好ましい）
-// ・★★ 他の人が遊びたくなるような面白ギミックも追加すること ★★
-
-// 【要点】
-// [感性－技術]：授業の範囲内でのテクニック
-//         → 制限された機能を使用していないこと(協調性)
-//         → 独自の技術であること・感心する技術であること
-// [感性－美術]：画面の構成の美しさ
-//         → 客観的な視点から感情を揺さぶらせること
-//         → 視覚的にルールが理解しやすいこと・UIが良いこと
-// [感性－企画]：ゲームのアイディア
-//         → 興味を引く内容である・遊びたくなる内容である
-//         → 課題として独創的な内容である
-// [努力－熱意]：作りこみ内容
-//         → コードのボリューム・関数やマクロ定義・定数の種類
-//         → バグを出さないルートづくり
-// [努力－誠実]：コードの見やすさ
-//         → 変数・関数・構造体等の単語の命名センス
-//         → インデント位置・コメント・ルールに従う能力
-// [努力－設計]：アルゴリズムの資料作成
-//         → 資料の見やすさ・手続き(処理)の整理
-//         → アルゴリズムの理解力
-// [理解－分析]：課題の理解力
-//         → 指示に内容に記載されているルールを理解していること
-//         → 仕様に対してコードへ実装する力があること
-//         → プログラムの知識があること
-// [理解－提出]：締め切り・フォーマットの管理
-//         → コンパイルエラーが発生する
-//         → フォーマット通りではない（圧縮の仕方、クラウドサービス等）
-//         → ファイルが足りない・間違えている・壊れている 
-
 #include "conioex.h"
 #include <iostream>
 #include <fstream>
@@ -96,9 +21,12 @@ enum BattleTurn {
     ENEMY_TURN,
 };
 
-GameState GlobalgameState;
-
 struct Character;
+
+enum JobType {
+    WARRIOR,
+    MAGE,
+};
 
 // my input setting for compatibility
 void init_terminal();
@@ -107,25 +35,29 @@ void set_terminal_mode(bool blocking);
 int kbhit(void);
 int my_getch(void);
 void clearScreen();
+
 void savePlayerToFile(Character* player);
 bool loadPlayerFromFile(Character* player);
+void getWidthAndHeight(char *art[], int *width, int *height);
+void creatPlayerData(const char* name, JobType job);
+void createEnemyData(const char* name);
+void drawArtAtXY(int x, int y, const char* art[]);
+void drawThePlatform();
+void drawStartScreen();
+void handleStartScreenInput();
+void drawPlayerNameInputScreen();
+void handlePlayerNameInput();
+void drawCreateCharacterScreen();
+void handleCreateCharacterInput();
+void drawEnemyCreationScreen();
+void handleEnemyCreationInput();
+void drawPlayerLoadScreen();
+void handlePlayerLoadInput();
+void drawBattleScreen();
+void handleBattleInput();
+void drawGameOverScreen();
+void handleGameOverInput();
 
-void getWidthAndHeight(char *art[], int *width, int *height) {
-    *width = 0;
-    *height = 0;
-    for (int i = 0; art[i] != nullptr; i++) {
-        int len = strlen(art[i]);
-        if (len > *width) {
-            *width = len;
-        }
-        (*height)++;
-    }
-}
-
-enum JobType {
-    WARRIOR,
-    MAGE,
-};
 
 enum OptionType {
     YES,
@@ -136,8 +68,6 @@ char JobStrings[][10] = {
     "Warrior",
     "Mage",
 };
-
-
 
 enum PlayerNameInputState {
     INPUT_NEW_NAME,
@@ -297,8 +227,174 @@ const char *enemy_mage_art[] = {
 
 Character playerCharacter;
 Character enemyCharacter;
+GameState GlobalgameState;
+
+int main() {
+
+    GlobalgameState = STATE_TITLE;
+    setcursortype(NOCURSOR);
+
+    while(true) {
+        switch (GlobalgameState)
+        {
+        case STATE_TITLE:
+            drawStartScreen();
+            handleStartScreenInput();
+            break;
+        case STATE_PLAYER_NAME_INPUT:
+            drawPlayerNameInputScreen();
+            handlePlayerNameInput();
+            break;
+        case STATE_PLAYER_LOAD:
+            drawPlayerLoadScreen();
+            handlePlayerLoadInput();
+            break;
+        case STATE_PLAYER_CREATION:
+            drawCreateCharacterScreen();
+            handleCreateCharacterInput();
+            break;
+        case STATE_ENEMY_CREATION:
+            drawEnemyCreationScreen();
+            handleEnemyCreationInput();
+            break;
+        case STATE_BATTLE:
+            drawBattleScreen();
+            handleBattleInput();
+            break;
+        case STATE_GAME_OVER:
+            drawGameOverScreen();
+            handleGameOverInput();
+            break;
+        case STATE_EXIT:
+            setcursortype(NORMALCURSOR);
+            clearScreen();
+        default:
+            return 0;
+        }
+    }
+    return 0;
+}
+
+
+
+
+#if defined(__linux__) || defined(__APPLE__)
+
+static struct termios original_tio;
+static struct termios blocking_tio;
+static struct termios non_blocking_tio;
+static int peek_character = -1;
+
+#endif
+
+
+void init_terminal() {
+
+#if defined(__linux__) || defined(__APPLE__)
+    tcgetattr(STDIN_FILENO, &original_tio);
+    blocking_tio = original_tio;
+    blocking_tio.c_lflag &= ~(ICANON | ECHO);
+    blocking_tio.c_cc[VMIN] = 1;
+    blocking_tio.c_cc[VTIME] = 0;
+    non_blocking_tio = original_tio;
+    non_blocking_tio.c_lflag &= ~(ICANON | ECHO);
+    non_blocking_tio.c_cc[VMIN] = 0;
+    non_blocking_tio.c_cc[VTIME] = 0;
+#endif
+}
+
+void restore_terminal() {
+#if defined(__linux__) || defined(__APPLE__)
+    tcsetattr(STDIN_FILENO, TCSANOW, &original_tio);
+#endif
+}
+
+void set_terminal_mode(bool blocking) {
+#if defined(__linux__) || defined(__APPLE__)
+    if (blocking) {
+        tcsetattr(STDIN_FILENO, TCSANOW, &blocking_tio);
+    }
+    else {
+        tcsetattr(STDIN_FILENO, TCSANOW, &non_blocking_tio);
+    }
+#endif
+}
+
+int kbhit(void) {
+#if defined(__linux__) || defined(__APPLE__)
+    if (peek_character != -1) return 1;
+    char ch;
+    int nread = read(STDIN_FILENO, &ch, 1);
+    if (nread == 1) {
+        peek_character = ch;
+        return 1;
+    }
+    return 0;
+#elif _WIN32
+    return _kbhit();
+#endif
+}
+
+int my_getch(void) {
+#if defined(__linux__) || defined(__APPLE__)
+    char ch;
+    if (peek_character != -1) {
+        ch = peek_character;
+        peek_character = -1;
+        return ch;
+    }
+    int nread = read(STDIN_FILENO, &ch, 1);
+    if (nread == 1) return ch;
+    return -1;
+ #elif _WIN32
+	 return _getch();
+#endif
+}
+
+void clearScreen()
+{
+#ifdef _WIN32
+    system("cls");
+#elif defined(__linux__) || defined(__APPLE__)
+    system("clear");
+#endif
+}
+
+void savePlayerToFile(Character* player)
+{
+    std::ofstream outFile("player_data.bin", std::ios::binary);
+    if (outFile.is_open()) {
+        outFile.write(reinterpret_cast<const char*>(player), sizeof(Character));
+        outFile.close();
+    }
+}
+
+bool loadPlayerFromFile(Character* player)
+{
+    std::ifstream inFile("player_data.bin", std::ios::binary);
+    if (inFile.is_open()) {
+        inFile.read(reinterpret_cast<char*>(player), sizeof(Character));
+        inFile.close();
+        return true;
+    }
+    return false;
+}
+
+void getWidthAndHeight(char *art[], int *width, int *height) {
+
+    *width = 0;
+    *height = 0;
+    for (int i = 0; art[i] != nullptr; i++) {
+        int len = strlen(art[i]);
+        if (len > *width) {
+            *width = len;
+        }
+        (*height)++;
+    }
+}
 
 void creatPlayerData(const char* name, JobType job) {
+
     strncpy(playerCharacter.name, name, 12);
     playerCharacter.name[12] = '\0'; 
     playerCharacter.job = job;
@@ -416,7 +512,7 @@ void drawStartScreen() {
     gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
 }
 
- void handleStartScreenInput() {
+void handleStartScreenInput() {
     char ch = my_getch();
     while (ch != '\r' && ch != '\n') {
         ch = my_getch();
@@ -484,7 +580,6 @@ void handlePlayerNameInput() {
     }
     restore_terminal();
 }
-
 
 void drawCreateCharacterScreen(){
     clearScreen();
@@ -927,155 +1022,4 @@ void handleGameOverInput()
         GlobalgameState = STATE_EXIT;
     }
     restore_terminal();
-}
-
-int main() {
-
-    GlobalgameState = STATE_TITLE;
-    setcursortype(NOCURSOR);
-
-    while(true) {
-        switch (GlobalgameState)
-        {
-        case STATE_TITLE:
-            drawStartScreen();
-            handleStartScreenInput();
-            break;
-        case STATE_PLAYER_NAME_INPUT:
-            drawPlayerNameInputScreen();
-            handlePlayerNameInput();
-            break;
-        case STATE_PLAYER_LOAD:
-            drawPlayerLoadScreen();
-            handlePlayerLoadInput();
-            break;
-        case STATE_PLAYER_CREATION:
-            drawCreateCharacterScreen();
-            handleCreateCharacterInput();
-            break;
-        case STATE_ENEMY_CREATION:
-            drawEnemyCreationScreen();
-            handleEnemyCreationInput();
-            break;
-        case STATE_BATTLE:
-            drawBattleScreen();
-            handleBattleInput();
-            break;
-        case STATE_GAME_OVER:
-            drawGameOverScreen();
-            handleGameOverInput();
-            break;
-        case STATE_EXIT:
-            setcursortype(NORMALCURSOR);
-            clearScreen();
-        default:
-            return 0;
-        }
-    }
-    return 0;
-}
-
-
-
-
-#if defined(__linux__) || defined(__APPLE__)
-
-static struct termios original_tio;
-static struct termios blocking_tio;
-static struct termios non_blocking_tio;
-static int peek_character = -1;
-
-#endif
-
-
-void init_terminal() {
-
-#if defined(__linux__) || defined(__APPLE__)
-    tcgetattr(STDIN_FILENO, &original_tio);
-    blocking_tio = original_tio;
-    blocking_tio.c_lflag &= ~(ICANON | ECHO);
-    blocking_tio.c_cc[VMIN] = 1;
-    blocking_tio.c_cc[VTIME] = 0;
-    non_blocking_tio = original_tio;
-    non_blocking_tio.c_lflag &= ~(ICANON | ECHO);
-    non_blocking_tio.c_cc[VMIN] = 0;
-    non_blocking_tio.c_cc[VTIME] = 0;
-#endif
-}
-
-void restore_terminal() {
-#if defined(__linux__) || defined(__APPLE__)
-    tcsetattr(STDIN_FILENO, TCSANOW, &original_tio);
-#endif
-}
-
-void set_terminal_mode(bool blocking) {
-#if defined(__linux__) || defined(__APPLE__)
-    if (blocking) {
-        tcsetattr(STDIN_FILENO, TCSANOW, &blocking_tio);
-    }
-    else {
-        tcsetattr(STDIN_FILENO, TCSANOW, &non_blocking_tio);
-    }
-#endif
-}
-
-int kbhit(void) {
-#if defined(__linux__) || defined(__APPLE__)
-    if (peek_character != -1) return 1;
-    char ch;
-    int nread = read(STDIN_FILENO, &ch, 1);
-    if (nread == 1) {
-        peek_character = ch;
-        return 1;
-    }
-    return 0;
-#elif _WIN32
-    return _kbhit();
-#endif
-}
-
-int my_getch(void) {
-#if defined(__linux__) || defined(__APPLE__)
-    char ch;
-    if (peek_character != -1) {
-        ch = peek_character;
-        peek_character = -1;
-        return ch;
-    }
-    int nread = read(STDIN_FILENO, &ch, 1);
-    if (nread == 1) return ch;
-    return -1;
- #elif _WIN32
-	 return _getch();
-#endif
-}
-
-void clearScreen()
-{
-#ifdef _WIN32
-    system("cls");
-#elif defined(__linux__) || defined(__APPLE__)
-    system("clear");
-#endif
-}
-
-void savePlayerToFile(Character* player)
-{
-    std::ofstream outFile("player_data.bin", std::ios::binary);
-    if (outFile.is_open()) {
-        outFile.write(reinterpret_cast<const char*>(player), sizeof(Character));
-        outFile.close();
-    }
-}
-
-bool loadPlayerFromFile(Character* player)
-{
-    std::ifstream inFile("player_data.bin", std::ios::binary);
-    if (inFile.is_open()) {
-        inFile.read(reinterpret_cast<char*>(player), sizeof(Character));
-        inFile.close();
-        return true;
-    }
-    return false;
 }
