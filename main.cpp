@@ -773,8 +773,8 @@ void drawBattleProcess(BattleTurn turn)
                 attackType,
                 damageStr,
                 nullptr};
-
             drawArtAtXY(-1, SCREEN_HEIGHT - 5, playerAttackText);
+            // playAttackVideo(turn);
             turn = ENEMY_TURN;
         } else {
             if (enemyCharacter.job == WARRIOR) {
@@ -793,6 +793,7 @@ void drawBattleProcess(BattleTurn turn)
                 damageStr,
                 nullptr};
             drawArtAtXY(-1, SCREEN_HEIGHT - 5, enemyAttackText);
+            // playAttackVideo(turn);
             turn = PLAYER_TURN;
         }
 
@@ -880,19 +881,52 @@ void drawGameOverScreen()
     }
     const char* resultArt[] = {resultText, nullptr};
     drawArtAtXY(-1, 15, resultArt);
-
-    const char* pressKey[] = {"Press any key to exit...", nullptr};
-    drawArtAtXY(-1, 18, pressKey);
-    gotoxy(1, SCREEN_HEIGHT); // Move cursor out of the way
 }
 
 void handleGameOverInput()
 {
+    const char* endOption[] = {
+        "Do you want to play again or quit game?", 
+        "1. Play Again",
+        "2. Quit Game",
+        nullptr};
+    drawArtAtXY(-1, 16, endOption);
+    int endWidth, endHeight;
+    getWidthAndHeight((char**)endOption, &endWidth, &endHeight);
+    const char* arrow[] = {"->", nullptr};
+    drawArtAtXY((SCREEN_WIDTH - endWidth)/2 - 2, 17, arrow);
+    OptionType endSelection = YES;
+
     init_terminal();
-    set_terminal_mode(true);
-    my_getch();
+    set_terminal_mode(false); 
+        while (true) {
+        if (kbhit()) {
+            char ch = my_getch();
+            if (ch == 'w' || ch == 'W') {
+                endSelection = static_cast<OptionType>((endSelection - 1 + 2) % 2);
+            } else if (ch == 's' || ch == 'S') {
+                endSelection = static_cast<OptionType>((endSelection + 1) % 2);
+            } else if (ch == '\r' || ch == '\n') {
+                break;
+            }
+            for (int i = 0; i < 2; i++) {
+                gotoxy((SCREEN_WIDTH - endWidth)/2 - 2, 17 + i);
+                if (i == endSelection) {
+                    drawArtAtXY((SCREEN_WIDTH - endWidth)/2 - 2, 17 + i, arrow);
+                } else {
+                    const char* space[] = {"  ", nullptr};
+                    drawArtAtXY((SCREEN_WIDTH - endWidth)/2 - 2, 17 + i, space);
+                }
+            }
+        }
+    }
+
+    if (endSelection == YES) {
+        GlobalgameState = STATE_TITLE;
+    } else {
+        GlobalgameState = STATE_EXIT;
+    }
     restore_terminal();
-    GlobalgameState = STATE_EXIT;
 }
 
 int main() {
